@@ -1,6 +1,7 @@
 from guizero import App, Text, TextBox, PushButton, Picture, ButtonGroup
 import random
 import os
+from datetime import datetime, timedelta
 
 #Appends pressed button numbers to the textbox field
 def input_to_textbox(user_input):
@@ -10,17 +11,35 @@ def input_to_textbox(user_input):
 def clear_textbox():
     text_box.clear()
 
-#Sends the data in the textbox.(Currently just prints the data)
+#Removes the code once it has been used
+def remove_code_from_file(code):
+    filename = "codes.txt"
+    with open(filename, "r") as file:
+        lines = file.readlines()
+        with open(filename, "w") as file:
+            for line in lines:
+                if line.strip() != code:
+                    file.write(line)
+
+#Sends the data in the textbox
 def send_data():
-    entered_code = text_box.value
+    entered_code = text_box.value.strip()
     used_codes = load_used_codes()
-    if entered_code in used_codes:
-        print("Processing code:", entered_code)
+    if entered_code == "":
+        print("Entered code is empty.")
+    elif entered_code in used_codes:
+        if code_expired(entered_code):
+            print("Code has expired:", entered_code)
+            remove_code_from_file(entered_code)
+        else:
+            print("Processing code:", entered_code)
+            timestamp = generate_timestamp()
+            code_timestamps[entered_code] = timestamp
     else:
         print("Wrong code:", entered_code)
         
     text_box.clear()
-    
+
 #Generate a random 6-digit code
 def generate_code():
     random_code = str(random.randint(100000, 999999))
@@ -29,23 +48,7 @@ def generate_code():
     while random_code in used_codes:
         random_code = str(random.randint(100000, 999999))
 
-    text_box.value = random_code
-    used_codes.add(random_code)
-    save_used_codes()
-
-#Check if the user input matches the generated code
-def check_code():
-    user_input = self.user_input_var.get()
-    generated_code = self.generated_code_var.get()
-
-    if generated_code in self.used_codes:
-        messagebox.showerror("Error", "Code has already been used. Generate a new one.")
-    elif user_input == generated_code:
-        messagebox.showinfo("Success", "Box opened successfully!")
-        self.used_codes.add(generated_code)
-        self.save_used_codes()
-    else:
-        messagebox.showerror("Error", "Incorrect code. Try again.")
+    save_used_codes(random_code)
 
 #Load used codes from a file
 def load_used_codes():
@@ -56,10 +59,21 @@ def load_used_codes():
     return set()
 
 #Save used codes to a file
-def save_used_codes():
+def save_used_codes(code):
     filename = "codes.txt"
     with open(filename, "a") as file:
-        file.write(text_box.value + "\n")
+        file.write(code + "\n")
+        
+#Generate a timestamp for a code
+def generate_timestamp():
+    return datetime.now()
+
+#Check if a code has expired
+def code_expired(code):
+    if code in code_timestamps:
+        expiration_time = code_timestamps[code] + timedelta(minutes=1)
+        return datetime.now() > expiration_time
+    return False
 
 app = App(title = "NUTIKAPP", width= 1280, height = 720, layout = "grid")
 
@@ -68,6 +82,8 @@ welcome_message = Text(app, text = "SISESTA KOOD", font = "Times New Roman", gri
 text_box = TextBox(app, grid = [1,1], width=25)
 
 used_codes = set()
+
+code_timestamps = {}
 
 #Buttons, command = function to be called when pressed, args = passed argument into function when pressed
 button1 = PushButton(app, text="1", grid=[0,2], align = "right", width=15, command=input_to_textbox, args=['1'])
