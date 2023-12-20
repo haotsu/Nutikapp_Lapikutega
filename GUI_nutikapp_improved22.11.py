@@ -4,6 +4,7 @@ from guizero import App, Text, TextBox, PushButton, Picture, ButtonGroup, Box, W
 import random
 import os
 from datetime import datetime, timedelta
+import time
 #I2C imports
 import smbus
 
@@ -25,6 +26,15 @@ def remove_code_from_file(code):
                 if line.strip() != code:
                     file.write(line)
 
+def open_door(a):
+    # Send the command to open door, kapp nr2
+    data = a*0x10 + 0x1
+    bus.write_byte(DEVICE_ADDR, data)
+
+def condition():
+    b = bus.read_byte(DEVICE_ADDR)
+    return b
+
 #Sends the data in the textbox
 def send_data():
     entered_code = text_box.value.strip()
@@ -43,6 +53,15 @@ def send_data():
             app.info("INFO", "     Kapp avatud!     ")
             timestamp = generate_timestamp()
             code_timestamps[entered_code] = timestamp
+            open_door(2)
+            time.sleep(8)
+            door = condition()
+            if door == 1:
+                app.info("INFO", "     Uks ei lainud lahti!     ")
+            elif door == 2:
+                app.info("INFO", "     Uks ei lainud kinni tagasi!     ")
+            elif door == 0:
+                app.info("INFO", "     Koik ok!     ")
     elif entered_code == "1337":
         print("Processing code:", entered_code)
     else:
@@ -72,7 +91,7 @@ def generate_timestamp():
 #Check if a code has expired
 def code_expired(code):
     if code in code_timestamps:
-        expiration_time = code_timestamps[code] + timedelta(minutes=0.1)
+        expiration_time = code_timestamps[code] + timedelta(minutes=15)
         return datetime.now() > expiration_time
     return False
 
@@ -80,8 +99,13 @@ def code_expired(code):
 def check_code(code):
     #Function that opens the selected box
     def open_box():
-        radioBoxValue = radioBoxes.value
+        radioBoxValue = int(radioBoxes.value)
         adminWindow.info("AVA KAPP", "Avasid kapi {}".format(radioBoxValue))
+    def open_door_admin():
+        # Send the command to open door, kapp nr2
+        data = int(radioBoxes.value)
+        # data = a*0x10 + 0x1
+        bus.write_byte(DEVICE_ADDR, data)
         
     #Generate a random 6-digit code
     def generate_code():
@@ -100,15 +124,15 @@ def check_code(code):
         adminWindow = Window(app, title = "ADMINI KAPP", width= 400, height = 300)
         window_box = Box(adminWindow, layout = "grid")
         i2c_button = PushButton(window_box, text="I2C", grid=[0, 3], align="top", width=15, command=i2c_code)
-        radioBoxes = ButtonGroup(window_box, options=[["KAPP 1", "1"], ["KAPP 2", "2"], ["KAPP 3", "3"], ["KAPP 4", "4"]], grid=[0,1], align = "left")
-        buttonOpenBox = PushButton(window_box, text="AVA KAPP", grid=[0,0], align = "top", width=15, command=open_box)
+        radioBoxes = ButtonGroup(window_box, options=[["KAPP 1", 1], ["KAPP 2", 2]], grid=[0,1], align = "left")
+        buttonOpenBox = PushButton(window_box, text="AVA KAPP", grid=[0,0], align = "top", width=15, command=open_door_admin)
         generate_button = PushButton(window_box, text="Generate Code", grid=[0, 2], align="top", width=15, command=generate_code)
     if code == '0000':
         exit()
 
 def i2c_code():
     #Send the command to the STM32
-    bus.write_i2c_block_data(DEVICE_ADDR, 0x00, data)
+    bus.write_byte(DEVICE_ADDR, data)
     
     #To read info from the STM32
     #read_info = bus.read_i2c_block_data(DEVICE_ADDR,99,3)
@@ -137,9 +161,9 @@ DEVICE_BUS = 1
 
 #STM32 Nucleo's I2C address
 #(will be left shifted to add the read write bit)
-DEVICE_ADDR =12
+DEVICE_ADDR =10
 bus = smbus.SMBus(DEVICE_BUS)
-data = [1,2,3,4,5,6,7,8,9]
+data = 1
 
 button_width = 5
 button_height = 2
