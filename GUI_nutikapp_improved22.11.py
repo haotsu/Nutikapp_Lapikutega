@@ -27,7 +27,7 @@ def remove_code_from_file(code):
                     file.write(line)
 
 def open_door(a):
-    # Send the command to open door, kapp nr2
+    #Send the command to open door
     data = a*0x10 + 0x1
     bus.write_byte(DEVICE_ADDR, data)
 
@@ -131,12 +131,8 @@ def check_code(code):
         exit()
 
 def i2c_code():
-    #Send the command to the STM32
+    #Send the command to the Device
     bus.write_byte(DEVICE_ADDR, data)
-    
-    #To read info from the STM32
-    #read_info = bus.read_i2c_block_data(DEVICE_ADDR,99,3)
-    #print(b)
 
 app = App(title = "NUTIKAPP", width= 1920, height = 1080)
 #Used for creating empty space at the top of the screen
@@ -147,7 +143,6 @@ center_box = Box(app, layout = "grid")
 welcome_message = Text(center_box, text = "SISESTA KOOD", font = "Times New Roman", grid = [1,0], size=30)
 
 text_box = TextBox(center_box, grid = [1,1], width=6)
-#text_box.disable()
 text_box.text_size = 30
 text_box.text_color = "#f3941c"
 text_box.bg = "#e0dcdc"
@@ -159,7 +154,7 @@ code_timestamps = {}
 #Initialize the I2C bus
 DEVICE_BUS = 1
 
-#STM32 Nucleo's I2C address
+#Device I2C address
 #(will be left shifted to add the read write bit)
 DEVICE_ADDR =10
 bus = smbus.SMBus(DEVICE_BUS)
