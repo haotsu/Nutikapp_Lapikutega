@@ -14,3 +14,8 @@ kood töötab nii
 pin struct sisaltab iga kapi sensorite ja solenoidi füüsiliste pinnide numbreid
 kappi struct sisaldab pinni structi, magnet sensori olekut, ir sensori olekut(mida hetkel veel ei ole), magnet sensori olekut(int uks, 0 - kinni, 1 lahti) ja error koodi.
 
+globaalsed muutujad, mitu kappi on ültse ühes boxis, ja siis kappide struct jada.
+
+Setup funktsioonis seadistatakse kappidde pinnid ja I2C funktsioonid.
+
+ava uks vunktsioon //TODO
